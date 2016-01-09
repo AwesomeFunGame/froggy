@@ -1,9 +1,14 @@
 module Froggy.TransitionUtil where
 
-type TransitionInfo a = {
+import Time exposing (..)
+import Signal 
+-- exposing (..)
+
+
+type alias TransitionInfo a = {
   oldValue: a,
   startTime: Time
 }
 
 time : Signal Time
-time = fps 30 |> timestamp |> lift fst
+time = fps 30 |> timestamp |> Signal.map fst

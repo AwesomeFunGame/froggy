@@ -1,12 +1,12 @@
 module Froggy.Main where
 
 import Window
-import Froggy.Model (..)
-import Froggy.State (..)
-import Froggy.View (..)
-import Froggy.TransitionUtil (..)
+import Froggy.Model exposing (..)
+import Froggy.State exposing (..)
+import Froggy.View exposing (..)
+import Froggy.TransitionUtil exposing (..)
 
-main = lift3 (view fontName) Window.dimensions time mainState
+main = Signal.map3 (view fontName) Window.dimensions time mainState
 
 mainState = game loadedGame
 

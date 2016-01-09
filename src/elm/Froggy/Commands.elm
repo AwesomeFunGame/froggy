@@ -2,11 +2,12 @@ module Froggy.Commands where
 
 import Keyboard
 import Mouse
-import Graphics.Input (..)
+import Time exposing (..)
+import Graphics.Input exposing (..)
 import Froggy.Grid as Grid
-import Froggy.Model (..)
+import Froggy.Model exposing (..)
 
-data Command =
+type Command =
   Nop |
   MoveBy Grid.Position |
   MoveTo Leaf |
@@ -16,11 +17,11 @@ data Command =
 
 commands : Signal (Maybe Game) -> Signal (Time, Command)
 commands loadedGame =
-  let moveBy = lift2 makeMoveBy Keyboard.shift Keyboard.arrows
-      continue = lift (makeCommand Continue) (merge Keyboard.enter Mouse.isDown)
-      restartLevel = lift (makeCommand RestartLevel) (Keyboard.isDown 27)
-      start = makeStart loadedGame
-  in merges [moveBy, moveTo.signal, continue, restartLevel, start] |> timestamp
+  let moveBy       = Signal.map2 makeMoveBy Keyboard.shift Keyboard.arrows
+      continue     = Signal.map (makeCommand Continue) ( Signal.merge Keyboard.enter Mouse.isDown)
+      restartLevel = Signal.map (makeCommand RestartLevel) (Keyboard.isDown 27)
+      start        = makeStart loadedGame
+  in Signal.mergeMany [moveBy, moveTo.signal, continue, restartLevel, start] |> timestamp
 
 makeMoveBy : Bool -> Grid.Position -> Command
 makeMoveBy shift arrows =
@@ -30,14 +31,17 @@ makeMoveBy shift arrows =
     y = -arrows.y * multiplier
   }
 
-moveTo : Input Command
-moveTo = input Nop
+--moveTo : Input Command
+--moveTo = input Nop
+
+moveTo : Signal.Mailbox Command
+moveTo = Signal.mailbox Nop
 
 makeCommand : Command -> Bool -> Command
 makeCommand command pressed = if pressed then command else Nop
 
 makeStart : Signal (Maybe Game) -> Signal Command
-makeStart loadedGame = foldp updateStart Nop loadedGame |> dropRepeats
+makeStart loadedGame = Signal.foldp updateStart Nop loadedGame |> Signal.dropRepeats
 
 updateStart : Maybe Game -> Command -> Command
 updateStart loadedGame startGame =

@@ -2,20 +2,19 @@ module Froggy.Levels where
 
 import Array
 import Froggy.Grid as Grid
+import Maybe exposing (..)
 
-type Level = {
+type alias Level = {
   frogPosition: Grid.Position,
   leafMatrix: LeafMatrix,
   levelPosition: Grid.Position,
   keyboardHintPosition: Grid.Position
 }
 
-type LeafMatrix = [[Bool]]
+type alias LeafMatrix = List ( List Bool )
 
-levels =
-  Array.fromList [
-    -- 0
-    {
+level0 = 
+      {
       frogPosition = {
         x = 6,
         y = 1
@@ -31,14 +30,19 @@ levels =
         [False, False, False, False, False, False, False, False]
       ],
       levelPosition = {
-        x = 6,
-        y = 0
+        x = round 6,
+        y = round 0
       },
       keyboardHintPosition = {
-        x = 0,
-        y = 0
+        x = round 0,
+        y = round 0
       }
-    },
+    }
+
+levels =
+  Array.fromList [
+    -- 0
+    level0,
     -- 1
     {
       frogPosition = {
@@ -767,6 +771,8 @@ levels =
   ]
 
 getLevel : Int -> Level
-getLevel levelNumber = levels |> Array.getOrFail levelNumber
+getLevel levelNumber = levels |> Array.get levelNumber |> withDefault level0
+--getLevel levelNumber = levels |> Array.getOrFail levelNumber
+
 
 numberOfLevels = levels |> Array.length

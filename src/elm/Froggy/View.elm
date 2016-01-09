@@ -1,18 +1,22 @@
 module Froggy.View where
 
 import Maybe
+import Maybe.Extra exposing (isJust)
 import Text
-import Graphics.Element as Element
-import Graphics.Input (..)
+import Color exposing (..)
+import Time exposing (..)
+import Graphics.Element as Element exposing (..)
+import Graphics.Input exposing (..)
+import Graphics.Collage exposing (..)
 import Easing
-import Easing (..)
-import Froggy.Util (..)
-import Froggy.TransitionUtil (..)
+import Easing exposing (..)
+import Froggy.Util exposing (..)
+import Froggy.TransitionUtil exposing (..)
 import Froggy.Grid as Grid
-import Froggy.Grid (..)
-import Froggy.Levels (..)
-import Froggy.Model (..)
-import Froggy.Commands (..)
+import Froggy.Grid exposing (..)
+import Froggy.Levels exposing (..)
+import Froggy.Model exposing (..)
+import Froggy.Commands exposing (..)
 
 view : String -> (Int, Int) -> Time -> Game -> Element
 view fontName (windowWidth, windowHeight) time game =
@@ -22,7 +26,7 @@ view fontName (windowWidth, windowHeight) time game =
           scene = game.scene |> viewScene fontName viewSize time lastSceneChange
           keyboardHint = game |> viewKeyboardHint fontName viewSize time |> collage viewSize viewSize
           cover = lastSceneChange |> viewCover (windowWidth, windowHeight) time
-      in [scene, keyboardHint, cover] |> map (container windowWidth windowHeight middle) |> layers
+      in [scene, keyboardHint, cover] |> List.map (container windowWidth windowHeight middle) |> layers
     Nothing ->
       let blackRectangle = spacer windowWidth windowHeight |> Element.color black
           loadingImage = image 64 64 (imagePath "loading.gif") |> container windowWidth windowHeight middle
@@ -35,7 +39,7 @@ viewScene fontName viewSize time lastSceneChange scene =
         Nothing -> scene
       tileSize = viewSize |> getTileSize
       frog = actualScene.frog |> viewFrog tileSize time
-      leaves = actualScene.leaves |> map (viewLeaf tileSize)
+      leaves = actualScene.leaves |> List.map (viewLeaf tileSize)
       targets = actualScene.leaves |> viewTargets actualScene.frog tileSize
       level = actualScene.levelNumber |> viewLevelNumber fontName tileSize
       message = actualScene |> viewMessage fontName tileSize time
@@ -46,7 +50,7 @@ getTileSize viewSize = (viewSize |> toFloat) / mapSize
 
 mapSize = 8
 
-viewFrog : Float -> Time -> Frog -> [Form]
+viewFrog : Float -> Time -> Frog -> List Form
 viewFrog tileSize time frog =
   let newWorldPosition = frog.leaf.position |> toWorld tileSize
       worldPosition = case frog.lastMove of
@@ -89,23 +93,23 @@ viewLeaf tileSize leaf =
   let worldPosition = leaf.position |> toWorld tileSize
   in sprite worldPosition tileSize (imagePath "leaf.png")
 
-viewTargets : Frog -> Float -> [Leaf] -> [Form]
+viewTargets : Frog -> Float -> List Leaf -> List Form
 viewTargets frog tileSize leaves =
-  let targets = leaves |> filter (reachableBy frog)
-      toClickable target = clickable moveTo.handle (MoveTo target)
-      distanceOf target = (distance target.position.x frog.leaf.position.x) + (distance target.position.y frog.leaf.position.y)
-      angleOf target = frog.leaf `angleBetween` target |> getOrElse 0
-      filename target = "arrows/" ++ (distanceOf target |> show) ++ "/" ++ (angleOf target |> show) ++ ".svg" |> imagePath
+  let targets              = leaves |> List.filter (reachableBy frog)
+      toClickable target   = clickable ( Signal.message moveTo.address (MoveTo target) )
+      distanceOf target    = ( distance target.position.x frog.leaf.position.x ) + ( distance target.position.y frog.leaf.position.y )
+      angleOf target       = frog.leaf `angleBetween` target |> getOrElse 0
+      filename target      = "arrows/" ++ (distanceOf target |> toString ) ++ "/" ++ ( angleOf target |> toString  ) ++ ".svg" |> imagePath
       worldPosition target = target.position |> toWorld tileSize
-      viewTarget target = customSprite (toClickable target) (worldPosition target) tileSize (filename target)
-  in targets |> map viewTarget
+      viewTarget target    = customSprite (toClickable target) (worldPosition target) tileSize (filename target)
+  in targets |> List.map viewTarget
 
-viewLevelNumber : String -> Float -> Int -> [Form]
+viewLevelNumber : String -> Float -> Int -> List Form
 viewLevelNumber fontName tileSize levelNumber =
   let position = (getLevel levelNumber) |> .levelPosition
       worldPosition = position |> toWorld tileSize
       background = sprite worldPosition tileSize (imagePath "level.png")
-      indicator = textSprite fontName position tileSize ("Level\n" ++ show levelNumber ++ "/" ++ show (numberOfLevels - 1)) |> rotate (-1 |> degrees)
+      indicator = textSprite fontName position tileSize ("Level\n" ++ toString levelNumber ++ "/" ++ toString  (numberOfLevels - 1)) |> rotate (-1 |> degrees)
   in [background, indicator]
 
 textSprite : String -> Grid.Position -> Float -> String -> Form
@@ -115,7 +119,7 @@ textSprite fontName position tileSize string =
   in gameText fontName textSize string |> makeForm worldPosition
 
 gameText : String -> Float -> String -> Element
-gameText fontName height string = toText string |> Text.style {
+gameText fontName height string = Text.fromString string |> Text.style {
     typeface = [fontName],
     height = Just height,
     color = red,
@@ -124,34 +128,35 @@ gameText fontName height string = toText string |> Text.style {
     line = Nothing
   } |> centered
 
-viewMessage : String -> Float -> Time -> Scene -> [Form]
+viewMessage : String -> Float -> Time -> Scene -> List Form
 viewMessage fontName tileSize time scene =
   let inverseAngle = ((angleOf scene.frog + 180) % 360) |> toFloat
       deltaX = cos (inverseAngle |> degrees) |> round
       deltaY = (-1 * sin (inverseAngle |> degrees)) |> round
       position = scene.frog.leaf.position `translate` { x = deltaX, y = deltaY }
       worldPosition = toWorld tileSize position
-      filename = "message/" ++ (inverseAngle |> show) ++ ".svg" |> imagePath
+      filename = "message/" ++ (inverseAngle |> toString ) ++ ".svg" |> imagePath
       background = sprite worldPosition tileSize filename
       iconSize = tileSize / 2.5
       forms =
-        if | scene |> levelCompleted ->
+        if ( scene |> levelCompleted ) then
              let lastLevel = scene.levelNumber == numberOfLevels - 1
              in if lastLevel then
                   [background, sprite worldPosition iconSize (imagePath "completed.svg")]
                 else
                   [background, sprite worldPosition iconSize (imagePath "next.png")]
-           | scene |> stuck -> [background, sprite worldPosition iconSize (imagePath "restart.png")]
-           | otherwise -> []
+          else if ( scene |> stuck ) then 
+            [background, sprite worldPosition iconSize (imagePath "restart.png")]
+          else  []
       scaleFactor = case scene.frog.lastMove of
         Just { startTime } -> ease easeInOutBack float 0 1 (moveDuration * 2) (time - startTime)
         Nothing -> 1
-  in forms |> map (scale scaleFactor)
+  in forms |> List.map (scale scaleFactor)
 
 imagePath : String -> String
 imagePath filename = "images/" ++ filename
 
-viewKeyboardHint : String -> Int -> Time -> Game -> [Form]
+viewKeyboardHint : String -> Int -> Time -> Game -> List Form
 viewKeyboardHint fontName viewSize time game =
   if game.usingKeyboard then
     let tileSize = viewSize |> getTileSize
@@ -159,19 +164,20 @@ viewKeyboardHint fontName viewSize time game =
         worldPosition = gridPosition |> toWorld tileSize
         background = sprite worldPosition tileSize (imagePath "key.svg")
         text string = string |> textSprite fontName gridPosition tileSize 
-        forms = if | (game.scene |> levelCompleted) && (game.scene.levelNumber == 0) -> [background, text "Enter"]
-          | (game.scene |> stuck) && not (game.scene |> levelCompleted) -> [background, text "Esc"]
-          | (game.scene |> onlyDoubleJump) && (game.scene.levelNumber == 0) -> [background, text "Shift"]
-          | otherwise -> []
+        forms = 
+          if      ( (game.scene |> levelCompleted) && (game.scene.levelNumber == 0) ) then [background, text "Enter"]
+          else if ( (game.scene |> stuck) && not (game.scene |> levelCompleted) )     then [background, text "Esc"]
+          else if ( (game.scene |> onlyDoubleJump) && (game.scene.levelNumber == 0) ) then [background, text "Shift"]
+          else  []
         scaleFactor = case game.scene.frog.lastMove of
           Just { startTime } -> ease easeInOutQuad float 0 1 moveDuration (time - startTime)
           Nothing -> 1
-    in forms |> map (scale scaleFactor)
+    in forms |> List.map (scale scaleFactor)
   else []
 
 viewCover : (Int, Int) -> Time -> TransitionInfo (Maybe Scene) -> Element
 viewCover (windowWidth, windowHeight) time lastSceneChange =
-  let easingFunction = if lastSceneChange.oldValue |> Maybe.isJust then retour Easing.linear else Easing.flip Easing.linear
+  let easingFunction = if lastSceneChange.oldValue |> isJust then retour Easing.linear else Easing.flip Easing.linear
       factor = ease easingFunction float 0 1 sceneChangeDuration (time - lastSceneChange.startTime)
   in spacer windowWidth windowHeight |> Element.color black |> opacity factor
 

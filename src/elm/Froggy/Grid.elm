@@ -1,6 +1,6 @@
 module Froggy.Grid where
 
-type Position = {
+type alias Position = {
   x: Int,
   y: Int
 }
