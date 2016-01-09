@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 cd ${0%/*}
-elm-get install
+elm-package install
 npm install

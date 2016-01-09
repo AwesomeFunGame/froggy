@@ -1,8 +1,10 @@
 {
   "name": "Froggy",
+  "description": "upgrading froggy to elm 0.16",
   "version": "0.1.0",
+  "license": "MIT",
   "devDependencies": {
     "shelljs": "^0.3.0"
   },
-  "repository": "https://github.com/thSoft/froggy.git"
+  "repository": "https://github.com/AwesomeFunGame/froggy.git"
 }

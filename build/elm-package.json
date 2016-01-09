@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "summary": "Trying to upgrade froggy to elm 0.16",
+    "repository": "https://github.com/AwesomeFunGame/froggy.git",
+    "license": "BSD3",
+    "source-directories": [
+        ".",
+        "../src/elm"
+    ],
+    "exposed-modules": [],
+    "dependencies": {
+        "elm-lang/core": "3.0.0 <= v < 4.0.0",
+        "Dandandan/Easing": "0.8.1 <= v < 2.0.2",
+        "circuithub/elm-maybe-extra": "1.5.1 <= v < 1.5.2" 
+    },
+    "elm-version": "0.16.0 <= v < 0.17.0"
+}
