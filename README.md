@@ -1,6 +1,6 @@
 ## Play
 
-[Have fun!](http://AwesomeFunGame.github.io/froggy)
+[Have fun!](http://AwesomeFunGame.github.io/froggy) < not published yet, so you have to build locally to play >
 
 ## Design
 
@@ -10,10 +10,10 @@ If you are a graphic designer and this game inspires you, I'd be very grateful i
 
 ### Install
   * [node.js](http://nodejs.org/download/)
-  * [Elm 0.13](http://elm-lang.org/Install.elm)
+  * [Elm 0.16](http://elm-lang.org/Install.elm)
 
 ### Check out
-    git clone https://github.com/thSoft/froggy.git
+    git clone https://github.com/AwesomeFunGame/froggy.git
     cd froggy
     build/init.sh
 
