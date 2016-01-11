@@ -1,6 +1,6 @@
 ## Play
 
-[Have fun!](http://AwesomeFunGame.github.io/froggy) < not published yet, so you have to build locally to play >
+[Have fun!](http://AwesomeFunGame.github.io/froggy) < inverted leaf colors to show clickable area  >
 
 ## Design
 
